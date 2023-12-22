@@ -1,28 +1,30 @@
 from flask import Flask, request, jsonify
-from transformers import pipeline
+from nltk.sentiment import SentimentIntensityAnalyzer
+import nltk
+import os
 from flask_cors import CORS
+
+
+# nltk.download('vader_lexicon')
 
 app = Flask(__name__)
 CORS(app)
+
 def analyze_sentiments(feedback_data, aspect):
-    sentiment_analyzer = pipeline("sentiment-analysis",model="distilbert-base-uncased")
+    sid = SentimentIntensityAnalyzer()
     sentiments = {'Positive': 0, 'Neutral': 0, 'Negative': 0}
 
- 
-    result = sentiment_analyzer(feedback_data)
+    sentences = nltk.sent_tokenize(feedback_data)
 
-    for prediction in result:
-        label = prediction['label'].lower()
-        score = prediction['score']
-
-    
+    for sentence in sentences:
+        # Modify this part based on the actual logic for different aspects
         if aspect == 'Content':
-            if 'positive' in label:
-                sentiments['Positive'] += score
-            elif 'negative' in label:
-                sentiments['Negative'] += score
+            if 'informative' in sentence.lower():
+                sentiments['Positive'] += 1
+            elif 'confusing' in sentence.lower():
+                sentiments['Negative'] += 1
             else:
-                sentiments['Neutral'] += score
+                sentiments['Neutral'] += 1
         elif aspect == 'Instructor':
             if 'knowledgeable' in sentence.lower():
                 sentiments['Positive'] += 1
@@ -58,7 +60,10 @@ def analyze_sentiments(feedback_data, aspect):
 def analyze_feedback():
     try:
         file = request.files['file']
-        aspect = request.form.get('selectedAspect')  
+        aspect = request.form.get('selectedAspect')  # Get the selected aspect from the form data
+
+        # Your logic to read the file, perform sentiment analysis, and return results
+        # This is a placeholder using NLTK for simplicity
         feedback_data = file.read().decode('utf-8')
         sentiments = analyze_sentiments(feedback_data, aspect)
 
