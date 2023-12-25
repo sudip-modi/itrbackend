@@ -1,28 +1,32 @@
-from flask import Flask, request, jsonify
-from transformers import pipeline
-from flask_cors import CORS
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from nltk.sentiment import SentimentIntensityAnalyzer
+import nltk
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI()
+
+# Initialize NLTK (uncomment if not already downloaded)
+# nltk.download('vader_lexicon')
+
+class SentimentRequest(BaseModel):
+    selectedAspect: str
+
 def analyze_sentiments(feedback_data, aspect):
-    sentiment_analyzer = pipeline("sentiment-analysis",model="distilbert-base-uncased")
+    sid = SentimentIntensityAnalyzer()
     sentiments = {'Positive': 0, 'Neutral': 0, 'Negative': 0}
 
- 
-    result = sentiment_analyzer(feedback_data)
+    sentences = nltk.sent_tokenize(feedback_data)
 
-    for prediction in result:
-        label = prediction['label'].lower()
-        score = prediction['score']
-
-    
+    for sentence in sentences:
+        # Modify this part based on the actual logic for different aspects
         if aspect == 'Content':
-            if 'positive' in label:
-                sentiments['Positive'] += score
-            elif 'negative' in label:
-                sentiments['Negative'] += score
+            if 'informative' in sentence.lower():
+                sentiments['Positive'] += 1
+            elif 'confusing' in sentence.lower():
+                sentiments['Negative'] += 1
             else:
-                sentiments['Neutral'] += score
+                sentiments['Neutral'] += 1
         elif aspect == 'Instructor':
             if 'knowledgeable' in sentence.lower():
                 sentiments['Positive'] += 1
@@ -54,17 +58,16 @@ def analyze_sentiments(feedback_data, aspect):
 
     return sentiments
 
-@app.route('/analyze', methods=['POST'])
-def analyze_feedback():
+@app.post('/analyze')
+async def analyze_feedback(sentiment_request: SentimentRequest, file: UploadFile = File(...)):
     try:
-        file = request.files['file']
-        aspect = request.form.get('selectedAspect')  
-        feedback_data = file.read().decode('utf-8')
-        sentiments = analyze_sentiments(feedback_data, aspect)
+        # Your logic to read the file, perform sentiment analysis, and return results
+        feedback_data = file.file.read().decode('utf-8')
+        sentiments = analyze_sentiments(feedback_data, sentiment_request.selectedAspect)
 
-        return jsonify(sentiments)
+        return JSONResponse(content=sentiments)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return JSONResponse(content={'error': str(e)}, status_code=500)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

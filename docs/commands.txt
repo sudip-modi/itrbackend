@@ -1,0 +1,4 @@
+
+
+start uvicorn server for fast api
+uvicorn src.main:app --reload 

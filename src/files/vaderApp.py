@@ -17,6 +17,7 @@ def analyze_sentiments(feedback_data, aspect):
     sentences = nltk.sent_tokenize(feedback_data)
 
     for sentence in sentences:
+        print(sentence)
         # Modify this part based on the actual logic for different aspects
         if aspect == 'Content':
             if 'informative' in sentence.lower():
