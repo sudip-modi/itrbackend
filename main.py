@@ -4,6 +4,7 @@ import pandas as pd
 from flask_cors import CORS
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -70,10 +71,12 @@ def analyze_aspect():
     try:
         # Read the CSV file from the request
         file = request.files['file']
+        aspects = request.form.get("selectedAspects")
+        print(aspects)
         df = pd.read_csv(file)
         
         # Aspects to analyze
-        aspects = ['Quality', 'Content', 'Instructor', 'Material', 'Engagement', 'Application', 'Structure']
+        # aspects = ['Quality', 'Content', 'Instructor', 'Material', 'Engagement', 'Application', 'Structure']
 
         # Initialize sentiment analyzer
         sid = SentimentIntensityAnalyzer()
